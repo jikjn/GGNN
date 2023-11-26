@@ -49,12 +49,10 @@ class GNNLayer(Module):
 
         x = self.dropout(input) # Current Pytorch 1.5.0 doesn't support Dropout for sparse matrix
 
-        if self.for_L==False:
-            x = torch.mm(x, self.weight)
+        x = torch.mm(x, self.weight)
 
         output = torch.spmm(adj, x)
 
-        # output = self.bn(output) # should tune whether using BatchNorm or Dropout
 
         return self.act(output)
 
@@ -68,13 +66,10 @@ class GGNNLayer(Module):
         self.mean_transformation=GNNLayer(self.in_features,self.out_features)
 
 
-    def forward(self, input, adj):#L_matrice形状得是（B,N,C,C）
-        # 假设 mean 是你的均值矩阵 (B, N, C)，cov_matrices 是协方差矩阵 (B, N, C, C)
+    def forward(self, input, adj):
         N = input.shape[0]
 
-        # 生成标准正态随机变量
         standard_normal_samples = torch.randn(N, self.out_features)
-        # 重塑标准正态样本以匹配协方差矩阵的形状
 
 
         mean=self.mean_transformation(input,adj)
@@ -85,7 +80,6 @@ class GGNNLayer(Module):
 
         transformed_samples = torch.bmm(L_matrices, standard_normal_samples.unsqueeze(-1))
 
-        # 将变换后的样本重塑回原始形状并加上均值
         transformed_samples = transformed_samples.view( N, self.out_features) + mean
         return transformed_samples
 
